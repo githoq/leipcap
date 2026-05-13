@@ -1021,13 +1021,13 @@ let state = {
   cadernoMode: false
 };
 
-
 // ═══════════════════════════════════════════════════
-// SALVAR PROGRESSO AUTOMÁTICO
+// SALVAMENTO AUTOMÁTICO
 // ═══════════════════════════════════════════════════
+const STORAGE_KEY = 'pcap_simulado_progresso';
 
 function saveProgress(){
-  const saveData = {
+  const data = {
     filtered: state.filtered,
     cur: state.cur,
     answers: state.answers,
@@ -1038,16 +1038,15 @@ function saveProgress(){
     cadernoMode: state.cadernoMode
   };
 
-  localStorage.setItem(
-    "pcap_simulado_save",
-    JSON.stringify(saveData)
-  );
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
 function loadProgress(){
-  const saved = localStorage.getItem("pcap_simulado_save");
+  const saved = localStorage.getItem(STORAGE_KEY);
 
-  if(saved){
+  if(!saved) return;
+
+  try{
     const data = JSON.parse(saved);
 
     state.filtered = data.filtered || [...Q];
@@ -1055,15 +1054,20 @@ function loadProgress(){
     state.answers = data.answers || {};
     state.results = data.results || {};
     state.marked = new Set(data.marked || []);
-    state.mode = data.mode || "immediate";
+    state.mode = data.mode || 'immediate';
     state.seconds = data.seconds || 0;
     state.cadernoMode = data.cadernoMode || false;
+
+  }catch(err){
+    console.log('Erro ao carregar progresso', err);
   }
 }
 
 function clearProgress(){
-  localStorage.removeItem("pcap_simulado_save");
+  localStorage.removeItem(STORAGE_KEY);
 }
+
+
 
 // ═══════════════════════════════════════════════════
 // INIT
@@ -1072,12 +1076,9 @@ function init(){
   loadProgress();
   buildFilters();
   buildNavGrid();
-  saveProgress();
   renderQuestion();
-  saveProgress();
   startTimer();
   updateStats();
-  saveProgress();
 }
 
 function buildFilters(){
@@ -1250,6 +1251,7 @@ function selectOpt(qid, oi){
   if(!q) return;
   if(state.results[qid] !== undefined) return; // already confirmed
   state.answers[qid] = oi;
+  saveProgress();
   // re-render options only
   q.ops.forEach((_,i)=>{
     const el = document.getElementById(`opt-${qid}-${i}`);
@@ -1266,6 +1268,7 @@ function answerQ(qid){
   if(state.results[qid] !== undefined) return;
   const correct = state.answers[qid] === q.corr;
   state.results[qid] = correct ? 'correct' : 'wrong';
+  saveProgress();
   buildNavGrid();
   renderQuestion();
   updateStats();
@@ -1285,6 +1288,7 @@ function navigateRandom(){
 
 function navigate(dir){
   state.cur = Math.max(0, Math.min(state.filtered.length-1, state.cur+dir));
+  saveProgress();
   buildNavGrid();
   renderQuestion();
 }
@@ -1292,6 +1296,9 @@ function navigate(dir){
 function toggleMark(qid){
   if(state.marked.has(qid)) state.marked.delete(qid);
   else state.marked.add(qid);
+
+  saveProgress();
+
   buildNavGrid();
   renderQuestion();
   updateStats();
@@ -1299,6 +1306,7 @@ function toggleMark(qid){
 
 function setMode(m){
   state.mode = m;
+  saveProgress();
   document.getElementById('mode-imm').classList.toggle('active', m==='immediate');
   document.getElementById('mode-end').classList.toggle('active', m==='end');
 }
