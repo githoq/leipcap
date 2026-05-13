@@ -1021,6 +1021,50 @@ let state = {
   cadernoMode: false
 };
 
+
+// ═══════════════════════════════════════════════════
+// SALVAR PROGRESSO AUTOMÁTICO
+// ═══════════════════════════════════════════════════
+
+function saveProgress(){
+  const saveData = {
+    filtered: state.filtered,
+    cur: state.cur,
+    answers: state.answers,
+    results: state.results,
+    marked: [...state.marked],
+    mode: state.mode,
+    seconds: state.seconds,
+    cadernoMode: state.cadernoMode
+  };
+
+  localStorage.setItem(
+    "pcap_simulado_save",
+    JSON.stringify(saveData)
+  );
+}
+
+function loadProgress(){
+  const saved = localStorage.getItem("pcap_simulado_save");
+
+  if(saved){
+    const data = JSON.parse(saved);
+
+    state.filtered = data.filtered || [...Q];
+    state.cur = data.cur || 0;
+    state.answers = data.answers || {};
+    state.results = data.results || {};
+    state.marked = new Set(data.marked || []);
+    state.mode = data.mode || "immediate";
+    state.seconds = data.seconds || 0;
+    state.cadernoMode = data.cadernoMode || false;
+  }
+}
+
+function clearProgress(){
+  localStorage.removeItem("pcap_simulado_save");
+}
+
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
@@ -1062,11 +1106,8 @@ function applyFilters(){
   });
   state.cur = 0;
   buildNavGrid();
-  saveProgress();
   renderQuestion();
-  saveProgress();
   updateStats();
-  saveProgress();
 }
 
 function clearFilters(){
@@ -1077,11 +1118,8 @@ function clearFilters(){
   state.filtered = [...Q];
   state.cur = 0;
   buildNavGrid();
-  saveProgress();
   renderQuestion();
-  saveProgress();
   updateStats();
-  saveProgress();
 }
 
 // ═══════════════════════════════════════════════════
@@ -1106,9 +1144,7 @@ function buildNavGrid(){
       if(!inFilter) return;
       state.cur = fi;
       buildNavGrid();
-  saveProgress();
       renderQuestion();
-  saveProgress();
     };
     grid.appendChild(btn);
   });
@@ -1231,11 +1267,8 @@ function answerQ(qid){
   const correct = state.answers[qid] === q.corr;
   state.results[qid] = correct ? 'correct' : 'wrong';
   buildNavGrid();
-  saveProgress();
   renderQuestion();
-  saveProgress();
   updateStats();
-  saveProgress();
 }
 
 function navigateRandom(){
@@ -1247,28 +1280,21 @@ function navigateRandom(){
   const pick = pool[Math.floor(Math.random()*pool.length)];
   state.cur = pick.i;
   buildNavGrid();
-  saveProgress();
   renderQuestion();
-  saveProgress();
 }
 
 function navigate(dir){
   state.cur = Math.max(0, Math.min(state.filtered.length-1, state.cur+dir));
   buildNavGrid();
-  saveProgress();
   renderQuestion();
-  saveProgress();
 }
 
 function toggleMark(qid){
   if(state.marked.has(qid)) state.marked.delete(qid);
   else state.marked.add(qid);
   buildNavGrid();
-  saveProgress();
   renderQuestion();
-  saveProgress();
   updateStats();
-  saveProgress();
 }
 
 function setMode(m){
@@ -1413,11 +1439,8 @@ function doReset(){
   document.getElementById('f-prob').value='';
   document.getElementById('btn-caderno-top').classList.remove('active');
   buildNavGrid();
-  saveProgress();
   renderQuestion();
-  saveProgress();
   updateStats();
-  saveProgress();
   startTimer();
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -1439,58 +1462,6 @@ document.addEventListener('keydown', e=>{
 });
 
 init();
-
-
-// ═══════════════════════════════════════════════════
-// PERSISTÊNCIA DE PROGRESSO
-// ═══════════════════════════════════════════════════
-
-function saveProgress(){
-  try{
-    const saveData = {
-      filtered: state.filtered,
-      cur: state.cur,
-      answers: state.answers,
-      results: state.results,
-      marked: Array.from(state.marked),
-      mode: state.mode,
-      seconds: state.seconds,
-      cadernoMode: state.cadernoMode
-    };
-
-    localStorage.setItem(
-      "simulado_pc_ap_save",
-      JSON.stringify(saveData)
-    );
-  }catch(err){
-    console.log("Erro ao salvar:", err);
-  }
-}
-
-function loadProgress(){
-  try{
-    const saved = localStorage.getItem("simulado_pc_ap_save");
-
-    if(saved){
-      const data = JSON.parse(saved);
-
-      state.filtered = data.filtered || [...Q];
-      state.cur = data.cur || 0;
-      state.answers = data.answers || {};
-      state.results = data.results || {};
-      state.marked = new Set(data.marked || []);
-      state.mode = data.mode || "immediate";
-      state.seconds = data.seconds || 0;
-      state.cadernoMode = data.cadernoMode || false;
-    }
-  }catch(err){
-    console.log("Erro ao carregar:", err);
-  }
-}
-
-function clearProgress(){
-  localStorage.removeItem("simulado_pc_ap_save");
-}
 
 </script>
 </body>
